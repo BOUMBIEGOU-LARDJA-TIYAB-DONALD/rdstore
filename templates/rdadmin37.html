@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>CDP Store | Administration</title>
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23C6A75E'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='serif'>C</text></svg>">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-inner">
+            <!-- Logo -->
+            <a href="index" class="logo">
+                <div class="logo-icon">C</div>
+                <span class="logo-text">CDP Admin</span>
+            </a>
+            
+            <!-- Navigation -->
+            <nav class="nav">
+                <a href="index" class="nav-link">Voir le site</a>
+                
+                <!-- Theme Toggle -->
+                <button class="theme-toggle" id="themeToggle" aria-label="Changer de thème">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Admin Content -->
+    <main class="admin-main">
+        <div class="admin-container">
+            <!-- Admin Header -->
+            <div class="admin-header">
+                <div class="admin-title-section">
+                    <span class="admin-tag">Panneau d'administration</span>
+                    <h1 class="admin-title">Gestion des Produits</h1>
+                    <p class="admin-subtitle">Ajoutez, modifiez ou supprimez vos produits</p>
+                </div>
+                
+                <button class="btn btn-gold" id="btnAddProduct">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Ajouter un produit
+                </button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                            <line x1="7" y1="7" x2="7.01" y2="7"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalProducts">0</span>
+                        <span class="stat-label">Produits</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalCategories">0</span>
+                        <span class="stat-label">Catégories</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Table -->
+            <div class="admin-table-container">
+                <div class="table-header">
+                    <h3>Liste des produits</h3>
+                    <div class="table-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input type="text" id="searchProducts" placeholder="Rechercher un produit...">
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table" id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Titre</th>
+                                <th>Prix</th>
+                                <th>Catégorie</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Products will be generated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-empty" id="tableEmpty" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                        <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                    <p>Aucun produit trouvé</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="productModal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Ajouter un produit</h2>
+                <button class="modal-close" id="modalClose" aria-label="Fermer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form class="modal-form" id="productForm">
+                <input type="hidden" id="productId" value="">
+                
+                <div class="form-group">
+                    <label for="productTitre">Titre du produit *</label>
+                    <input type="text" id="productTitre" name="titre" required placeholder="Ex: iPhone 15 Pro Max">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrix">Prix *</label>
+                        <input type="text" id="productPrix" name="prix" required placeholder="Ex: 850 000 FCFA">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productCategorie">Catégorie *</label>
+                        <input type="text" id="productCategorie" name="categorie" required placeholder="Ex: Smartphones" list="categoriesList">
+                        <datalist id="categoriesList">
+                            <option value="Smartphones">
+                            <option value="Ordinateurs">
+                            <option value="Tablettes">
+                            <option value="Audio">
+                            <option value="Montres">
+                            <option value="Gaming">
+                            <option value="Photo">
+                            <option value="Drones">
+                            <option value="Accessoires">
+                        </datalist>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productDescription">Description *</label>
+                    <textarea id="productDescription" name="description" required rows="4" placeholder="Description détaillée du produit..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productImages">URLs des images (une par ligne)</label>
+                    <textarea id="productImages" name="images" rows="3" placeholder="https://exemple.com/image1.jpg&#10;https://exemple.com/image2.jpg"></textarea>
+                    <span class="form-hint">Laissez vide pour utiliser un placeholder</span>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" id="btnCancel">Annuler</button>
+                    <button type="submit" class="btn btn-gold" id="btnSubmit">
+                        <span id="btnSubmitText">Ajouter</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModalOverlay">
+        <div class="modal modal-small" id="deleteModal">
+            <div class="modal-header">
+                <h2>Confirmer la suppression</h2>
+                <button class="modal-close" id="deleteModalClose" aria-label="Fermer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="delete-warning">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <p>Êtes-vous sûr de vouloir supprimer ce produit ?</p>
+                    <span class="delete-product-name" id="deleteProductName"></span>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="btnCancelDelete">Annuler</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmDelete">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon" id="toastIcon"></div>
+        <span class="toast-message" id="toastMessage"></span>
+    </div>
+
+    <!-- JavaScript -->
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
