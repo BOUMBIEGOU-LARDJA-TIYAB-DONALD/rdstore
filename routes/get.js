@@ -2,17 +2,25 @@ import db from '../data/prepare.js';
 
 export async function getproducts(req, res) {
     try {
-        let products = await db('produits').select('*');
+        // Ne récupérer que les produits approuvés pour le site public
+        let products = await db('produits')
+            .select('*')
+            .where(function() {
+                this.where('statut_validation', 'approuve')
+                    .orWhereNull('statut_validation');
+            });
+        
+        // Retourner un tableau vide si pas de produits (pas d'erreur 404)
         if (!products || products.length === 0) {
-            return res.code(404).send({ error: "Pas de produits trouvés" });
+            return res.send([]);
         }
        
-       products.forEach(product => {
-              product.lien=`/product?id=${product.id}`;
-              let imagess= product.image.split(';;;');
-                product.images=imagess;
-         });
-         console.log(products);
+        products.forEach(product => {
+            product.lien = `/product?id=${product.id}`;
+            let imagess = product.image ? product.image.split(';;;') : [];
+            product.images = imagess;
+        });
+        console.log(products);
         return res.send(products);
     } catch (err) {
         console.error(err);

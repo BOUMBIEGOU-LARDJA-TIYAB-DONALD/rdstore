@@ -313,7 +313,18 @@ h3 {
 .nav {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--space-sm);
+}
+
+/* Sur mobile, cacher les liens de navigation textuels */
+@media (max-width: 480px) {
+    .nav {
+        gap: var(--space-xs);
+    }
+    
+    .nav-link {
+        display: none;
+    }
 }
 
 @media (min-width: 768px) {
@@ -365,6 +376,19 @@ h3 {
     color: var(--text-secondary);
     transition: all var(--transition-fast);
     background: var(--bg-secondary);
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .theme-toggle {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .theme-toggle svg {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 .theme-toggle:hover {
@@ -1364,6 +1388,19 @@ h3 {
     transition: all var(--transition-fast);
     background: var(--bg-secondary);
     cursor: pointer;
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .cart-icon {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .cart-icon svg {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 .cart-icon:hover {
