@@ -1,5 +1,5 @@
 /* =====================================================
-   CDP STORE - Admin Panel Stylesheet
+   RD STORE - Admin Panel Stylesheet
    Premium Electronics | Administration
    ===================================================== */
 
@@ -492,7 +492,8 @@
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
     padding: var(--space-sm) var(--space-md);
     background: var(--bg-surface);
     border: 1px solid var(--border-light);
@@ -505,9 +506,32 @@
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
     border-color: var(--accent-gold);
     box-shadow: 0 0 0 3px rgba(198, 167, 94, 0.15);
+}
+
+/* Select styling for forms */
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 2.5em;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75em center;
+}
+
+.form-group select:hover {
+    border-color: var(--accent-gold);
+}
+
+.form-group select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 0.5em;
 }
 
 .form-group input::placeholder,
@@ -895,4 +919,171 @@
     #ordersTableBody .order-numero {
         display: none;
     }
+}
+
+/* =====================================================
+   VENDEURS TABLE
+   ===================================================== */
+.vendeur-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35em 0.75em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 20px;
+}
+
+.vendeur-status.en_attente {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.vendeur-status.actif {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.vendeur-status.suspendu {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* =====================================================
+   VALIDATION SECTION
+   ===================================================== */
+.validation-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-left: var(--space-sm);
+}
+
+.validation-product-info {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+}
+
+.validation-product-image {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-card);
+}
+
+.validation-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.validation-product-details {
+    flex: 1;
+}
+
+.validation-product-details h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.validation-product-details .price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+    margin-bottom: var(--space-xs);
+}
+
+.validation-product-details .vendeur {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.validation-product-details .description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: var(--space-sm);
+    line-height: 1.5;
+}
+
+.validation-actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+}
+
+.btn-success {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 0.75em 1.25em;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-smooth);
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* Table action buttons for validation */
+.table-action-btn.approve {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.table-action-btn.approve:hover {
+    background: #28a745;
+    color: white;
+}
+
+.table-action-btn.reject {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.table-action-btn.reject:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.table-action-btn.view {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+}
+
+.table-action-btn.view:hover {
+    background: #17a2b8;
+    color: white;
 }
