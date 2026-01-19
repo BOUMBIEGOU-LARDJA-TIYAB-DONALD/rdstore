@@ -10,10 +10,10 @@ import { showpages } from "./utils/showpages.js";
 //import {readFile} from "node:fs/promises"
 //import fastifyFormbody from "@fastify/formbody"
 
-import { delproduct} from "./routes/delete.js";
-import {modifiyproduct } from "./routes/put.js";
-import { addProduct} from "./routes/post.js";
-import { getproducts} from "./routes/get.js";
+import { delproduct, delCommande} from "./routes/delete.js";
+import {modifiyproduct, modifyCommande } from "./routes/put.js";
+import { addProduct, addCommande} from "./routes/post.js";
+import { getproducts, getCommandes} from "./routes/get.js";
 import 'dotenv/config';
 
 //import mailerPlugin  from "./utils/mailer.js";
@@ -34,9 +34,13 @@ app.register(fastifyStatic,{
     // Route pour les autres pages
     app.get("/:page",(req,res) => showpages(req, res));
     app.get("/api/products", (req,res) => getproducts(req, res));
+    app.get("/api/commandes", (req,res) => getCommandes(req, res));
     app.post("/api/products",(req,res) => addProduct(req, res));
+    app.post("/api/commandes",(req,res) => addCommande(req, res));
     app.put("/api/products", (req,res) => modifiyproduct(req, res));
+    app.put("/api/commandes", (req,res) => modifyCommande(req, res));
     app.delete("/api/products", (req,res) => delproduct(req, res));
+    app.delete("/api/commandes", (req,res) => delCommande(req, res));
     const start = async ()=>{
         const PORT = process.env.PORT || 3000;
         await app.listen({port:PORT, host: '0.0.0.0'});

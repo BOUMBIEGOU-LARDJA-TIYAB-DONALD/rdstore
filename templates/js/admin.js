@@ -505,17 +505,303 @@ class AdminPanel {
     }
 
     // =====================================================
+    // ORDERS MANAGEMENT
+    // =====================================================
+    orders = [];
+    currentEditOrderId = null;
+    deleteOrderId = null;
+
+    async loadOrdersFromAPI() {
+        try {
+            const response = await fetch('/api/commandes');
+            if (response.ok) {
+                const data = await response.json();
+                this.orders = data;
+                this.renderOrders();
+                this.updateStats();
+            }
+        } catch (error) {
+            console.error('Erreur chargement commandes API:', error);
+            // Fallback vers localStorage
+            this.orders = this.loadOrdersFromStorage();
+            this.renderOrders();
+        }
+    }
+
+    loadOrdersFromStorage() {
+        const HISTORY_KEY = 'cdp-order-history';
+        try {
+            const stored = localStorage.getItem(HISTORY_KEY);
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            console.error('Erreur chargement commandes:', e);
+            return [];
+        }
+    }
+
+    loadOrders() {
+        return this.orders.length > 0 ? this.orders : this.loadOrdersFromStorage();
+    }
+
+    clearOrders() {
+        if (confirm('Voulez-vous vraiment effacer tout l\'historique des commandes ?')) {
+            localStorage.removeItem('cdp-order-history');
+            this.renderOrders();
+            this.updateStats();
+            Toast.show('Historique effacé');
+        }
+    }
+
+    getStatusLabel(status) {
+        const labels = {
+            'en_attente': 'En attente',
+            'confirmee': 'Confirmée',
+            'expediee': 'Expédiée',
+            'livree': 'Livrée',
+            'annulee': 'Annulée'
+        };
+        return labels[status] || status;
+    }
+
+    getStatusClass(status) {
+        const classes = {
+            'en_attente': 'pending',
+            'confirmee': 'confirmed',
+            'expediee': 'shipped',
+            'livree': 'delivered',
+            'annulee': 'cancelled'
+        };
+        return classes[status] || 'pending';
+    }
+
+    renderOrders() {
+        const orders = this.loadOrders();
+        const tbody = document.getElementById('ordersTableBody');
+        const empty = document.getElementById('ordersEmpty');
+        const filterSelect = document.getElementById('filterOrderStatus');
+        
+        if (!tbody) return;
+
+        // Filtrer par statut si un filtre est sélectionné
+        let filteredOrders = orders;
+        if (filterSelect && filterSelect.value) {
+            filteredOrders = orders.filter(o => o.statut === filterSelect.value);
+        }
+
+        if (filteredOrders.length === 0) {
+            tbody.innerHTML = '';
+            if (empty) empty.style.display = 'flex';
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+
+        tbody.innerHTML = filteredOrders.map(order => {
+            const date = new Date(order.date_commande || order.date);
+            const formattedDate = date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Gérer les articles (depuis API ou localStorage)
+            const items = order.articles || order.items || [];
+            const itemsText = items.map(i => `${i.titre} (×${i.quantity})`).join(', ');
+            const itemsShort = itemsText.length > 40 ? itemsText.substring(0, 40) + '...' : itemsText;
+            
+            const numero = order.numero_commande || '-';
+            const client = order.client_nom || order.name || '-';
+            const phone = order.client_telephone || order.phone || '-';
+            const total = order.total || 0;
+            const statut = order.statut || 'en_attente';
+            const orderId = order.id;
+            
+            return `
+                <tr data-order-id="${orderId}">
+                    <td class="order-numero">${numero}</td>
+                    <td class="order-date">${formattedDate}</td>
+                    <td class="order-client">${client}</td>
+                    <td class="order-phone">${phone}</td>
+                    <td class="order-items" title="${itemsText}">${itemsShort}</td>
+                    <td class="order-total">${this.formatPrice(total)}</td>
+                    <td class="order-status">
+                        <span class="status-badge ${this.getStatusClass(statut)}">${this.getStatusLabel(statut)}</span>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="table-action-btn edit" onclick="adminPanel.openEditOrderModal(${orderId})" title="Modifier">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </button>
+                            <button class="table-action-btn delete" onclick="adminPanel.openDeleteOrderModal(${orderId})" title="Supprimer">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    <line x1="10" y1="11" x2="10" y2="17"/>
+                                    <line x1="14" y1="11" x2="14" y2="17"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Order Edit Modal
+    openEditOrderModal(id) {
+        const order = this.orders.find(o => o.id === id);
+        if (!order) return;
+
+        this.currentEditOrderId = id;
+        
+        document.getElementById('editOrderId').value = order.id;
+        document.getElementById('editOrderNumero').value = order.numero_commande || '';
+        document.getElementById('editOrderNom').value = order.client_nom || '';
+        document.getElementById('editOrderTel').value = order.client_telephone || '';
+        document.getElementById('editOrderAdresse').value = order.client_adresse || '';
+        document.getElementById('editOrderNote').value = order.note || '';
+        document.getElementById('editOrderStatut').value = order.statut || 'en_attente';
+        
+        // Afficher résumé des articles
+        const items = order.articles || [];
+        const summary = document.getElementById('orderDetailsSummary');
+        if (summary && items.length > 0) {
+            summary.innerHTML = `
+                <h4>Articles commandés</h4>
+                <ul class="order-items-list">
+                    ${items.map(i => `<li>${i.titre} × ${i.quantity} - ${this.formatPrice(i.prix * i.quantity)}</li>`).join('')}
+                </ul>
+                <div class="order-total-summary">
+                    <strong>Total: ${this.formatPrice(order.total)}</strong>
+                </div>
+            `;
+        }
+        
+        document.getElementById('orderModalOverlay').classList.add('active');
+    }
+
+    closeEditOrderModal() {
+        document.getElementById('orderModalOverlay').classList.remove('active');
+        this.currentEditOrderId = null;
+    }
+
+    async handleOrderSubmit(e) {
+        e.preventDefault();
+        
+        const orderData = {
+            id: this.currentEditOrderId,
+            client_nom: document.getElementById('editOrderNom').value.trim(),
+            client_telephone: document.getElementById('editOrderTel').value.trim(),
+            client_adresse: document.getElementById('editOrderAdresse').value.trim(),
+            note: document.getElementById('editOrderNote').value.trim(),
+            statut: document.getElementById('editOrderStatut').value
+        };
+
+        try {
+            const response = await fetch('/api/commandes', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            });
+
+            if (response.ok) {
+                Toast.show('Commande modifiée avec succès');
+                this.closeEditOrderModal();
+                await this.loadOrdersFromAPI();
+            } else {
+                Toast.show('Erreur lors de la modification', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur modification commande:', error);
+            Toast.show('Erreur de connexion', 'error');
+        }
+    }
+
+    // Order Delete Modal
+    openDeleteOrderModal(id) {
+        const order = this.orders.find(o => o.id === id);
+        if (!order) return;
+
+        this.deleteOrderId = id;
+        document.getElementById('deleteOrderNumero').textContent = order.numero_commande || `Commande #${id}`;
+        document.getElementById('deleteOrderModalOverlay').classList.add('active');
+    }
+
+    closeDeleteOrderModal() {
+        document.getElementById('deleteOrderModalOverlay').classList.remove('active');
+        this.deleteOrderId = null;
+    }
+
+    async confirmDeleteOrder() {
+        if (!this.deleteOrderId) return;
+
+        try {
+            const response = await fetch('/api/commandes', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: this.deleteOrderId })
+            });
+
+            if (response.ok) {
+                Toast.show('Commande supprimée avec succès');
+                this.closeDeleteOrderModal();
+                await this.loadOrdersFromAPI();
+            } else {
+                Toast.show('Erreur lors de la suppression', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur suppression commande:', error);
+            Toast.show('Erreur de connexion', 'error');
+        }
+    }
+
+    formatPrice(price) {
+        if (!price) return '0 FCFA';
+        return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+    }
+
+    // =====================================================
     // RENDER
     // =====================================================
     render() {
         this.updateStats();
         this.renderTable(this.products);
+        this.renderOrders();
     }
 
     updateStats() {
+        // Products count
         this.totalProducts.textContent = this.products.length;
+        
+        // Categories count
         const categories = [...new Set(this.products.map(p => p.categorie))];
         this.totalCategories.textContent = categories.length;
+        
+        // Orders count and revenue (from API orders)
+        const orders = this.loadOrders();
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        
+        if (totalOrdersEl) {
+            totalOrdersEl.textContent = orders.length;
+        }
+        
+        if (totalRevenueEl) {
+            const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+            // Format for display (abbreviate if large)
+            if (totalRevenue >= 1000000) {
+                totalRevenueEl.textContent = (totalRevenue / 1000000).toFixed(1) + 'M';
+            } else if (totalRevenue >= 1000) {
+                totalRevenueEl.textContent = (totalRevenue / 1000).toFixed(0) + 'K';
+            } else {
+                totalRevenueEl.textContent = totalRevenue.toString();
+            }
+        }
     }
 
     renderTable(products) {
@@ -586,4 +872,58 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize Admin Panel
     window.adminPanel = new AdminPanel();
+    
+    // Charger les commandes depuis l'API
+    window.adminPanel.loadOrdersFromAPI();
+    
+    // Bind clear orders button
+    document.getElementById('btnClearOrders')?.addEventListener('click', () => {
+        window.adminPanel.clearOrders();
+    });
+
+    // Order Modal Events
+    const orderModalOverlay = document.getElementById('orderModalOverlay');
+    const orderModalClose = document.getElementById('orderModalClose');
+    const btnCancelOrder = document.getElementById('btnCancelOrder');
+    const orderEditForm = document.getElementById('orderEditForm');
+    const filterOrderStatus = document.getElementById('filterOrderStatus');
+
+    if (orderModalClose) {
+        orderModalClose.addEventListener('click', () => window.adminPanel.closeEditOrderModal());
+    }
+    if (btnCancelOrder) {
+        btnCancelOrder.addEventListener('click', () => window.adminPanel.closeEditOrderModal());
+    }
+    if (orderModalOverlay) {
+        orderModalOverlay.addEventListener('click', (e) => {
+            if (e.target === orderModalOverlay) window.adminPanel.closeEditOrderModal();
+        });
+    }
+    if (orderEditForm) {
+        orderEditForm.addEventListener('submit', (e) => window.adminPanel.handleOrderSubmit(e));
+    }
+    if (filterOrderStatus) {
+        filterOrderStatus.addEventListener('change', () => window.adminPanel.renderOrders());
+    }
+
+    // Delete Order Modal Events
+    const deleteOrderModalOverlay = document.getElementById('deleteOrderModalOverlay');
+    const deleteOrderModalClose = document.getElementById('deleteOrderModalClose');
+    const btnCancelDeleteOrder = document.getElementById('btnCancelDeleteOrder');
+    const btnConfirmDeleteOrder = document.getElementById('btnConfirmDeleteOrder');
+
+    if (deleteOrderModalClose) {
+        deleteOrderModalClose.addEventListener('click', () => window.adminPanel.closeDeleteOrderModal());
+    }
+    if (btnCancelDeleteOrder) {
+        btnCancelDeleteOrder.addEventListener('click', () => window.adminPanel.closeDeleteOrderModal());
+    }
+    if (deleteOrderModalOverlay) {
+        deleteOrderModalOverlay.addEventListener('click', (e) => {
+            if (e.target === deleteOrderModalOverlay) window.adminPanel.closeDeleteOrderModal();
+        });
+    }
+    if (btnConfirmDeleteOrder) {
+        btnConfirmDeleteOrder.addEventListener('click', () => window.adminPanel.confirmDeleteOrder());
+    }
 });
