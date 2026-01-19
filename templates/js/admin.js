@@ -1166,7 +1166,7 @@ class AdminPanel {
                     <span class="table-product-title">${product.titre}</span>
                 </td>
                 <td>
-                    <span class="table-product-price">${product.prix}</span>
+                    <span class="table-product-price">${this.formatPrice(product.prix)}</span>
                 </td>
                 <td>
                     <span class="table-product-category">${product.categorie}</span>

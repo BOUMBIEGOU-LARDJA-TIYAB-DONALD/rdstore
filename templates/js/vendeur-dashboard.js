@@ -4,6 +4,18 @@
  */
 
 // =====================================================
+// UTILITY - Format Prix avec FCFA
+// =====================================================
+function formatPrix(prix) {
+    if (!prix) return '0 FCFA';
+    // Si c'est déjà une chaîne avec FCFA, la retourner
+    if (typeof prix === 'string' && prix.includes('FCFA')) return prix;
+    // Sinon, formater le nombre
+    const num = typeof prix === 'string' ? parseInt(prix.replace(/[^\d]/g, '')) : prix;
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+}
+
+// =====================================================
 // TOAST NOTIFICATION
 // =====================================================
 class Toast {
@@ -319,7 +331,7 @@ class VendeurDashboard {
                         <span class="table-product-title">${product.titre}</span>
                     </td>
                     <td>
-                        <span class="table-product-price">${product.prix}</span>
+                        <span class="table-product-price">${formatPrix(product.prix)}</span>
                     </td>
                     <td>
                         <span class="table-product-category">${product.categorie}</span>
