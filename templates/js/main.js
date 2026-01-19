@@ -96,6 +96,18 @@ const CONFIG = {
 };
 
 // =====================================================
+// UTILITY - Format Prix avec FCFA
+// =====================================================
+function formatPrix(prix) {
+    if (!prix) return '0 FCFA';
+    // Si c'est déjà une chaîne avec FCFA, la retourner
+    if (typeof prix === 'string' && prix.includes('FCFA')) return prix;
+    // Sinon, formater le nombre
+    const num = typeof prix === 'string' ? parseInt(prix.replace(/[^\d]/g, '')) : prix;
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+}
+
+// =====================================================
 // CART SYSTEM
 // =====================================================
 class CartManager {
@@ -745,7 +757,7 @@ class HeroCarousel {
             <div class="carousel-slide-content">
                 <span class="carousel-slide-tag">${product.categorie || 'Premium'}</span>
                 <h2 class="carousel-slide-title">${product.titre}</h2>
-                <p class="carousel-slide-price">${product.prix}</p>
+                <p class="carousel-slide-price">${formatPrix(product.prix)}</p>
                 <a href="${product.lien}" class="carousel-slide-btn">Découvrir</a>
             </div>
         `;
@@ -880,7 +892,7 @@ function createProductCard(product, animationDelay = 0) {
         </div>
         <div class="product-card-content">
             <h3 class="product-card-title">${product.titre}</h3>
-            <p class="product-card-price">${product.prix}</p>
+            <p class="product-card-price">${formatPrix(product.prix)}</p>
             <p class="product-card-desc">${product.description ? product.description.substring(0, 80) + '...' : ''}</p>
             <div class="product-card-actions">
                 <button class="btn-add-cart" data-id="${product.id}" aria-label="Ajouter au panier">
@@ -1031,7 +1043,7 @@ function _initProductDetail(products) {
     const thumbsContainer = document.getElementById('productThumbs');
 
     if (titleEl) titleEl.textContent = product.titre;
-    if (priceEl) priceEl.textContent = product.prix;
+    if (priceEl) priceEl.textContent = formatPrix(product.prix);
     if (descEl) descEl.innerHTML = `<p>${product.description || ''}</p>`;
     if (tagEl) tagEl.textContent = product.categorie || 'Premium';
 
@@ -1103,7 +1115,7 @@ function _initProductDetail(products) {
     }
 
     if (whatsappBtn) {
-        const message = encodeURIComponent(`Bonjour, je suis intéressé par ${product.titre} à ${product.prix} disponible via ce lien ${window.location.href}. Pouvez-vous me donner plus d'informations ?`);
+        const message = encodeURIComponent(`Bonjour, je suis intéressé par ${product.titre} à ${formatPrix(product.prix)} disponible via ce lien ${window.location.href}. Pouvez-vous me donner plus d'informations ?`);
         whatsappBtn.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${message}`;
     }
 
