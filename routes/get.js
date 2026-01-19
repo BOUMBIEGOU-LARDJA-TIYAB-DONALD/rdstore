@@ -2,7 +2,13 @@ import db from '../data/prepare.js';
 
 export async function getproducts(req, res) {
     try {
-        let products = await db('produits').select('*');
+        // Ne récupérer que les produits approuvés pour le site public
+        let products = await db('produits')
+            .select('*')
+            .where(function() {
+                this.where('statut_validation', 'approuve')
+                    .orWhereNull('statut_validation');
+            });
         if (!products || products.length === 0) {
             return res.code(404).send({ error: "Pas de produits trouvés" });
         }
