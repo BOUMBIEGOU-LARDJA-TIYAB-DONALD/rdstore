@@ -1,5 +1,5 @@
 /**
- * CDP Store - Admin Panel JavaScript
+ * RD Store - Admin Panel JavaScript
  * Gestion des produits CRUD
  */
 
@@ -121,7 +121,7 @@ const defaultProducts = [
 // STORAGE MANAGER
 // =====================================================
 class StorageManager {
-    static STORAGE_KEY = 'cdp-products';
+    static STORAGE_KEY = 'rd-products';
 
     static getProducts() {
         // Retourne les produits du cache local immédiatement
@@ -176,7 +176,7 @@ class ThemeManager {
     }
 
     init() {
-        const savedTheme = localStorage.getItem('cdp-theme');
+        const savedTheme = localStorage.getItem('rd-theme');
         if (savedTheme) {
             document.documentElement.setAttribute('data-theme', savedTheme);
         }
@@ -191,7 +191,7 @@ class ThemeManager {
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         
         document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('cdp-theme', newTheme);
+        localStorage.setItem('rd-theme', newTheme);
     }
 }
 
@@ -235,6 +235,10 @@ class AdminPanel {
         this.products = StorageManager.getProducts();
         this.currentEditId = null;
         this.deleteProductId = null;
+        this.vendeurs = [];
+        this.produitsEnAttente = [];
+        this.currentValidationProduct = null;
+        this.currentVendeur = null;
         
         this.initElements();
         this.initEvents();
@@ -242,6 +246,10 @@ class AdminPanel {
         
         // Charger les produits depuis l'API en arrière-plan
         this.loadFromAPI();
+        
+        // Charger vendeurs et produits en attente
+        this.loadVendeurs();
+        this.loadProduitsEnAttente();
     }
 
     async loadFromAPI() {
@@ -529,7 +537,7 @@ class AdminPanel {
     }
 
     loadOrdersFromStorage() {
-        const HISTORY_KEY = 'cdp-order-history';
+        const HISTORY_KEY = 'rd-order-history';
         try {
             const stored = localStorage.getItem(HISTORY_KEY);
             return stored ? JSON.parse(stored) : [];
@@ -545,7 +553,7 @@ class AdminPanel {
 
     clearOrders() {
         if (confirm('Voulez-vous vraiment effacer tout l\'historique des commandes ?')) {
-            localStorage.removeItem('cdp-order-history');
+            localStorage.removeItem('rd-order-history');
             this.renderOrders();
             this.updateStats();
             Toast.show('Historique effacé');
@@ -766,6 +774,332 @@ class AdminPanel {
     }
 
     // =====================================================
+    // VENDEURS MANAGEMENT
+    // =====================================================
+    async loadVendeurs() {
+        try {
+            const response = await fetch('/api/admin/vendeurs');
+            if (response.ok) {
+                const data = await response.json();
+                this.vendeurs = data.vendeurs || [];
+                this.renderVendeurs();
+            }
+        } catch (error) {
+            console.error('Erreur chargement vendeurs:', error);
+        }
+    }
+
+    renderVendeurs() {
+        const tbody = document.getElementById('vendeursTableBody');
+        const empty = document.getElementById('vendeursEmpty');
+        const filterSelect = document.getElementById('filterVendeurStatus');
+        
+        if (!tbody) return;
+
+        let filtered = this.vendeurs;
+        if (filterSelect && filterSelect.value) {
+            filtered = this.vendeurs.filter(v => v.statut === filterSelect.value);
+        }
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '';
+            if (empty) empty.style.display = 'flex';
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+
+        tbody.innerHTML = filtered.map(vendeur => {
+            const statusLabel = {
+                'en_attente': 'En attente',
+                'actif': 'Actif',
+                'suspendu': 'Suspendu'
+            }[vendeur.statut] || 'En attente';
+
+            return `
+                <tr data-vendeur-id="${vendeur.id}">
+                    <td>${vendeur.id}</td>
+                    <td>${vendeur.nom}</td>
+                    <td><strong>${vendeur.boutique_nom}</strong></td>
+                    <td>${vendeur.email}</td>
+                    <td>${vendeur.telephone || '-'}</td>
+                    <td>
+                        <span class="vendeur-status ${vendeur.statut}">${statusLabel}</span>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="table-action-btn edit" onclick="adminPanel.openVendeurModal(${vendeur.id})" title="Changer statut">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    openVendeurModal(id) {
+        const vendeur = this.vendeurs.find(v => v.id === id);
+        if (!vendeur) return;
+
+        this.currentVendeur = vendeur;
+        document.getElementById('vendeurModalNom').textContent = vendeur.nom;
+        document.getElementById('vendeurModalBoutique').textContent = vendeur.boutique_nom;
+        document.getElementById('vendeurStatutSelect').value = vendeur.statut;
+        document.getElementById('vendeurModalOverlay').classList.add('active');
+    }
+
+    closeVendeurModal() {
+        document.getElementById('vendeurModalOverlay').classList.remove('active');
+        this.currentVendeur = null;
+    }
+
+    async confirmVendeurStatut() {
+        if (!this.currentVendeur) return;
+
+        const newStatut = document.getElementById('vendeurStatutSelect').value;
+
+        try {
+            const response = await fetch('/api/admin/vendeurs/statut', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: this.currentVendeur.id, statut: newStatut })
+            });
+
+            if (response.ok) {
+                Toast.show('Statut du vendeur modifié');
+                this.closeVendeurModal();
+                await this.loadVendeurs();
+            } else {
+                Toast.show('Erreur lors de la modification', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur modification statut:', error);
+            Toast.show('Erreur de connexion', 'error');
+        }
+    }
+
+    // =====================================================
+    // PRODUITS EN ATTENTE DE VALIDATION
+    // =====================================================
+    async loadProduitsEnAttente() {
+        try {
+            const response = await fetch('/api/admin/produits/en-attente');
+            if (response.ok) {
+                const data = await response.json();
+                this.produitsEnAttente = data.produits || [];
+                this.renderProduitsEnAttente();
+            }
+        } catch (error) {
+            console.error('Erreur chargement produits en attente:', error);
+        }
+    }
+
+    renderProduitsEnAttente() {
+        const tbody = document.getElementById('validationTableBody');
+        const empty = document.getElementById('validationEmpty');
+        const countBadge = document.getElementById('validationCount');
+        
+        if (!tbody) return;
+
+        if (countBadge) {
+            countBadge.textContent = this.produitsEnAttente.length;
+        }
+
+        if (this.produitsEnAttente.length === 0) {
+            tbody.innerHTML = '';
+            if (empty) empty.style.display = 'flex';
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+
+        tbody.innerHTML = this.produitsEnAttente.map(produit => {
+            const images = produit.images || [];
+            const date = new Date(produit.date_soumission);
+            const formattedDate = date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+
+            return `
+                <tr data-validation-id="${produit.id}">
+                    <td>
+                        <div class="table-product-image ${images.length > 0 ? '' : 'placeholder'}">
+                            ${images.length > 0 
+                                ? `<img src="${images[0]}" alt="${produit.titre}">`
+                                : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>`
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <span class="table-product-title">${produit.titre}</span>
+                    </td>
+                    <td>
+                        <span class="table-product-price">${produit.prix}</span>
+                    </td>
+                    <td>
+                        <strong>${produit.boutique_nom || 'N/A'}</strong><br>
+                        <small>${produit.vendeur_nom || ''}</small>
+                    </td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="table-action-btn view" onclick="adminPanel.openValidationModal(${produit.id})" title="Voir détails">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                            <button class="table-action-btn approve" onclick="adminPanel.quickApprove(${produit.id})" title="Approuver">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </button>
+                            <button class="table-action-btn reject" onclick="adminPanel.openValidationModal(${produit.id}, true)" title="Refuser">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    openValidationModal(id, showRefus = false) {
+        const produit = this.produitsEnAttente.find(p => p.id === id);
+        if (!produit) return;
+
+        this.currentValidationProduct = produit;
+        
+        const images = produit.images || [];
+        const infoDiv = document.getElementById('validationProductInfo');
+        
+        infoDiv.innerHTML = `
+            <div class="validation-product-image">
+                ${images.length > 0 
+                    ? `<img src="${images[0]}" alt="${produit.titre}">`
+                    : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">Pas d'image</div>`
+                }
+            </div>
+            <div class="validation-product-details">
+                <h3>${produit.titre}</h3>
+                <div class="price">${produit.prix}</div>
+                <div class="vendeur">Vendeur: ${produit.boutique_nom || 'N/A'} (${produit.vendeur_nom || 'N/A'})</div>
+                <div class="description">${produit.description || 'Pas de description'}</div>
+            </div>
+        `;
+
+        const motifGroup = document.getElementById('refusMotifGroup');
+        if (showRefus) {
+            motifGroup.style.display = 'block';
+        } else {
+            motifGroup.style.display = 'none';
+        }
+
+        document.getElementById('validationModalOverlay').classList.add('active');
+    }
+
+    closeValidationModal() {
+        document.getElementById('validationModalOverlay').classList.remove('active');
+        document.getElementById('refusMotif').value = '';
+        this.currentValidationProduct = null;
+    }
+
+    async quickApprove(id) {
+        try {
+            const response = await fetch('/api/admin/produits/validation', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, statut_validation: 'approuve' })
+            });
+
+            if (response.ok) {
+                Toast.show('Produit approuvé');
+                await this.loadProduitsEnAttente();
+                await this.loadFromAPI();
+            } else {
+                Toast.show('Erreur lors de l\'approbation', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur approbation:', error);
+            Toast.show('Erreur de connexion', 'error');
+        }
+    }
+
+    async approuverProduit() {
+        if (!this.currentValidationProduct) return;
+
+        try {
+            const response = await fetch('/api/admin/produits/validation', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: this.currentValidationProduct.id, statut_validation: 'approuve' })
+            });
+
+            if (response.ok) {
+                Toast.show('Produit approuvé');
+                this.closeValidationModal();
+                await this.loadProduitsEnAttente();
+                await this.loadFromAPI();
+            } else {
+                Toast.show('Erreur lors de l\'approbation', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur approbation:', error);
+            Toast.show('Erreur de connexion', 'error');
+        }
+    }
+
+    async refuserProduit() {
+        if (!this.currentValidationProduct) return;
+
+        const motif = document.getElementById('refusMotif').value.trim();
+        
+        // Afficher le champ motif si pas encore visible
+        const motifGroup = document.getElementById('refusMotifGroup');
+        if (motifGroup.style.display === 'none') {
+            motifGroup.style.display = 'block';
+            document.getElementById('refusMotif').focus();
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/produits/validation', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: this.currentValidationProduct.id, 
+                    statut_validation: 'refuse',
+                    motif_refus: motif
+                })
+            });
+
+            if (response.ok) {
+                Toast.show('Produit refusé');
+                this.closeValidationModal();
+                await this.loadProduitsEnAttente();
+            } else {
+                Toast.show('Erreur lors du refus', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur refus:', error);
+            Toast.show('Erreur de connexion', 'error');
+        }
+    }
+
+    // =====================================================
     // RENDER
     // =====================================================
     render() {
@@ -925,5 +1259,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (btnConfirmDeleteOrder) {
         btnConfirmDeleteOrder.addEventListener('click', () => window.adminPanel.confirmDeleteOrder());
+    }
+
+    // Vendeurs Filter
+    const filterVendeurStatus = document.getElementById('filterVendeurStatus');
+    if (filterVendeurStatus) {
+        filterVendeurStatus.addEventListener('change', () => window.adminPanel.renderVendeurs());
+    }
+
+    // Validation Modal Events
+    const validationModalOverlay = document.getElementById('validationModalOverlay');
+    const validationModalClose = document.getElementById('validationModalClose');
+    const btnCancelValidation = document.getElementById('btnCancelValidation');
+    const btnApprouverProduit = document.getElementById('btnApprouverProduit');
+    const btnRefuserProduit = document.getElementById('btnRefuserProduit');
+
+    if (validationModalClose) {
+        validationModalClose.addEventListener('click', () => window.adminPanel.closeValidationModal());
+    }
+    if (btnCancelValidation) {
+        btnCancelValidation.addEventListener('click', () => window.adminPanel.closeValidationModal());
+    }
+    if (validationModalOverlay) {
+        validationModalOverlay.addEventListener('click', (e) => {
+            if (e.target === validationModalOverlay) window.adminPanel.closeValidationModal();
+        });
+    }
+    if (btnApprouverProduit) {
+        btnApprouverProduit.addEventListener('click', () => window.adminPanel.approuverProduit());
+    }
+    if (btnRefuserProduit) {
+        btnRefuserProduit.addEventListener('click', () => window.adminPanel.refuserProduit());
+    }
+
+    // Vendeur Modal Events
+    const vendeurModalOverlay = document.getElementById('vendeurModalOverlay');
+    const vendeurModalClose = document.getElementById('vendeurModalClose');
+    const btnCancelVendeur = document.getElementById('btnCancelVendeur');
+    const btnConfirmVendeur = document.getElementById('btnConfirmVendeur');
+
+    if (vendeurModalClose) {
+        vendeurModalClose.addEventListener('click', () => window.adminPanel.closeVendeurModal());
+    }
+    if (btnCancelVendeur) {
+        btnCancelVendeur.addEventListener('click', () => window.adminPanel.closeVendeurModal());
+    }
+    if (vendeurModalOverlay) {
+        vendeurModalOverlay.addEventListener('click', (e) => {
+            if (e.target === vendeurModalOverlay) window.adminPanel.closeVendeurModal();
+        });
+    }
+    if (btnConfirmVendeur) {
+        btnConfirmVendeur.addEventListener('click', () => window.adminPanel.confirmVendeurStatut());
     }
 });

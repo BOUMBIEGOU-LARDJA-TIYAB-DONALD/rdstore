@@ -9,8 +9,7 @@ export async function getproducts(req, res) {
                 this.where('statut_validation', 'approuve')
                     .orWhereNull('statut_validation');
             });
-        
-        // Retourner un tableau vide si pas de produits (pas d'erreur 404)
+
         if (!products || products.length === 0) {
             return res.send([]);
         }

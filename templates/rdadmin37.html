@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>CDP Store | Administration</title>
+    <title>RD Store | Administration</title>
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,7 +27,7 @@
             <!-- Logo -->
             <a href="index" class="logo">
                 <div class="logo-icon">C</div>
-                <span class="logo-text">CDP Admin</span>
+                <span class="logo-text">RD Admin</span>
             </a>
             
             <!-- Navigation -->
@@ -130,6 +130,84 @@
                         <span class="stat-value" id="totalRevenue">0</span>
                         <span class="stat-label">Chiffre d'affaires</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Vendeurs Section -->
+            <div class="admin-table-container" id="vendeursSection" style="margin-bottom: var(--space-lg);">
+                <div class="table-header">
+                    <h3>👥 Gestion des Vendeurs</h3>
+                    <div class="table-header-actions">
+                        <select id="filterVendeurStatus" class="filter-select">
+                            <option value="">Tous les statuts</option>
+                            <option value="en_attente">En attente</option>
+                            <option value="actif">Actifs</option>
+                            <option value="suspendu">Suspendus</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table" id="vendeursTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Boutique</th>
+                                <th>Email</th>
+                                <th>Téléphone</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendeursTableBody">
+                            <!-- Vendeurs will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-empty" id="vendeursEmpty" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <p>Aucun vendeur inscrit</p>
+                </div>
+            </div>
+
+            <!-- Produits en attente de validation -->
+            <div class="admin-table-container" id="validationSection" style="margin-bottom: var(--space-lg);">
+                <div class="table-header">
+                    <h3>⏳ Produits en attente de validation</h3>
+                    <span class="validation-count" id="validationCount">0</span>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table" id="validationTable">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Produit</th>
+                                <th>Prix</th>
+                                <th>Vendeur</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="validationTableBody">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-empty" id="validationEmpty" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <p>Aucun produit en attente de validation</p>
                 </div>
             </div>
 
@@ -411,6 +489,85 @@
             <div class="form-actions">
                 <button type="button" class="btn btn-outline" id="btnCancelDeleteOrder">Annuler</button>
                 <button type="button" class="btn btn-danger" id="btnConfirmDeleteOrder">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Produit Modal -->
+    <div class="modal-overlay" id="validationModalOverlay">
+        <div class="modal" id="validationModal">
+            <div class="modal-header">
+                <h2 id="validationModalTitle">Valider le produit</h2>
+                <button class="modal-close" id="validationModalClose" aria-label="Fermer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="validation-product-info" id="validationProductInfo">
+                    <!-- Product info will be loaded here -->
+                </div>
+                
+                <div class="form-group" id="refusMotifGroup" style="display: none;">
+                    <label for="refusMotif">Motif du refus</label>
+                    <textarea id="refusMotif" rows="3" placeholder="Expliquez la raison du refus..."></textarea>
+                </div>
+            </div>
+            
+            <div class="form-actions validation-actions">
+                <button type="button" class="btn btn-outline" id="btnCancelValidation">Annuler</button>
+                <button type="button" class="btn btn-danger" id="btnRefuserProduit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    Refuser
+                </button>
+                <button type="button" class="btn btn-success" id="btnApprouverProduit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    Approuver
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendeur Statut Modal -->
+    <div class="modal-overlay" id="vendeurModalOverlay">
+        <div class="modal modal-small" id="vendeurModal">
+            <div class="modal-header">
+                <h2 id="vendeurModalTitle">Changer le statut</h2>
+                <button class="modal-close" id="vendeurModalClose" aria-label="Fermer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <p>Vendeur: <strong id="vendeurModalNom"></strong></p>
+                <p>Boutique: <strong id="vendeurModalBoutique"></strong></p>
+                
+                <div class="form-group" style="margin-top: var(--space-md);">
+                    <label for="vendeurStatutSelect">Nouveau statut</label>
+                    <select id="vendeurStatutSelect" class="filter-select" style="width: 100%;">
+                        <option value="en_attente">En attente</option>
+                        <option value="actif">Actif</option>
+                        <option value="suspendu">Suspendu</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="btnCancelVendeur">Annuler</button>
+                <button type="button" class="btn btn-gold" id="btnConfirmVendeur">Confirmer</button>
             </div>
         </div>
     </div>

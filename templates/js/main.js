@@ -1,5 +1,5 @@
 /**
- * CDP Store - Main JavaScript
+ * RD Store - Main JavaScript
  * Premium Electronics E-commerce
  * Mobile First | Luxury Design
  */
@@ -11,7 +11,7 @@ let productsData = [];
 
 // Récupérer les produits depuis l'API
 async function getProductsData() {
-    const STORAGE_KEY = 'cdp-products';
+    const STORAGE_KEY = 'rd-products';
     
     try {
         // Essayer de récupérer depuis l'API
@@ -112,7 +112,7 @@ function formatPrix(prix) {
 // =====================================================
 class CartManager {
     constructor() {
-        this.STORAGE_KEY = 'cdp-cart';
+        this.STORAGE_KEY = 'rd-cart';
         this.cart = this.loadCart();
         this.init();
     }
@@ -237,6 +237,7 @@ class CartManager {
                     </button>
                     <button class="btn-clear-cart" id="btnClearCart">Vider le panier</button>
                 </div>
+                <a href="/rdvendeur-login" class="vendeur-hidden-link">Espace vendeur</a>
             </div>
         `;
         document.body.appendChild(sidebar);
@@ -607,7 +608,7 @@ class CartManager {
     }
 
     saveOrderHistory(order) {
-        const HISTORY_KEY = 'cdp-order-history';
+        const HISTORY_KEY = 'rd-order-history';
         try {
             const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
             history.unshift(order);
@@ -632,7 +633,7 @@ class ThemeManager {
     }
 
     init() {
-        const savedTheme = localStorage.getItem('cdp-theme');
+        const savedTheme = localStorage.getItem('rd-theme');
         if (savedTheme) {
             document.documentElement.setAttribute('data-theme', savedTheme);
         } else {
@@ -652,7 +653,7 @@ class ThemeManager {
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
         document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('cdp-theme', newTheme);
+        localStorage.setItem('rd-theme', newTheme);
     }
 }
 
@@ -1047,7 +1048,7 @@ function _initProductDetail(products) {
     if (descEl) descEl.innerHTML = `<p>${product.description || ''}</p>`;
     if (tagEl) tagEl.textContent = product.categorie || 'Premium';
 
-    document.title = `${product.titre} | CDP Store`;
+    document.title = `${product.titre} | RD Store`;
 
     // Gérer les images
     console.log('Images du produit:', product.images, 'Type:', typeof product.images, 'Longueur:', product.images ? product.images.length : 0);

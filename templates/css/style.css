@@ -1,5 +1,5 @@
 /* =====================================================
-   CDP STORE - Luxury E-commerce Stylesheet
+   RD STORE - Luxury E-commerce Stylesheet
    Premium Electronics | Ultra Luxury Design
    Mobile First | Dark/Light Auto Theme
    ===================================================== */
@@ -1738,6 +1738,22 @@ h3 {
 
 .btn-clear-cart:hover {
     color: #e74c3c;
+}
+
+/* Lien quasi invisible vers espace vendeur */
+.vendeur-hidden-link {
+    display: block;
+    text-align: center;
+    margin-top: var(--space-md);
+    font-size: 0.65rem;
+    color: rgba(150, 150, 150, 0.25);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    letter-spacing: 0.05em;
+}
+
+.vendeur-hidden-link:hover {
+    color: rgba(150, 150, 150, 0.6);
 }
 
 /* Add to Cart Button on Product Card */
