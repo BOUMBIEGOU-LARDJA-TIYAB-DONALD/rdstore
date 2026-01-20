@@ -1,14 +1,21 @@
 import db from '../data/prepare.js';
 
 export async function modifiyproduct(req,res) {
-    const { id,titre, prix, description, image, categorie } = req.body;
-    if (!titre || !prix || !description  || !categorie) {
+    const { id, titre, prix, description, image, categorie, vendeur_id } = req.body;
+    if (!titre || !prix || !description || !categorie) {
         return res.status(400).send("Tous les champs sont requis");
     }
     try {
+        const updateData = { titre, prix, description, image, categorie };
+        
+        // Ajouter vendeur_id si fourni
+        if (vendeur_id) {
+            updateData.vendeur_id = vendeur_id;
+        }
+        
         const updated = await db('produits')
             .where({ id })
-            .update({ titre, prix, description, image, categorie });
+            .update(updateData);
         if (updated) {
             return res.status(200).send({ message: "Produit mis à jour avec succès" });
         } else {

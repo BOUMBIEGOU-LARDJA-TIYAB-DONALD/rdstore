@@ -132,6 +132,7 @@
                 <span class="product-info-tag" id="productTag">Premium</span>
                 <h1 class="product-info-title" id="productTitle">Nom du Produit</h1>
                 <p class="product-info-price" id="productPrice">0 FCFA</p>
+                <p class="product-info-boutique" id="productBoutique" style="display: none;"></p>
                 
                 <div class="product-info-description" id="productDescription">
                     <p>Description du produit. Les informations détaillées sur ce produit seront affichées ici. Caractéristiques, spécifications techniques, et tout ce que vous devez savoir avant de passer votre commande.</p>
@@ -188,6 +189,51 @@
             <polyline points="18,15 12,9 6,15"/>
         </svg>
     </button>
+
+    <!-- Modal Commande Externe -->
+    <div class="modal-overlay-external" id="externalOrderModalOverlay">
+        <div class="modal-external" id="externalOrderModal">
+            <div class="modal-external-header">
+                <h2>Commander ce produit</h2>
+                <button class="modal-external-close" id="externalOrderModalClose" aria-label="Fermer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form class="modal-external-form" id="externalOrderForm">
+                <p class="modal-external-info">Vous allez être redirigé vers le site du vendeur. Veuillez renseigner vos informations pour finaliser la commande.</p>
+                
+                <div class="modal-external-product" id="externalOrderProduct">
+                    <!-- Infos produit chargées dynamiquement -->
+                </div>
+                
+                <div class="form-group">
+                    <label for="externalOrderNom">Votre nom *</label>
+                    <input type="text" id="externalOrderNom" required placeholder="Entrez votre nom complet">
+                </div>
+                
+                <div class="form-group">
+                    <label for="externalOrderTel">Votre téléphone *</label>
+                    <input type="tel" id="externalOrderTel" required placeholder="Ex: 06 12 34 56 78">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" id="btnCancelExternalOrder">Annuler</button>
+                    <button type="submit" class="btn btn-commander">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/>
+                            <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        Commander sur le site
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- JavaScript -->
     <script src="js/main.js"></script>

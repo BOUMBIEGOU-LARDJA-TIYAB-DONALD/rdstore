@@ -547,7 +547,7 @@ export async function getVendeurs(req, res) {
 // ADMIN: Changer statut vendeur
 // =====================================================
 export async function updateVendeurStatut(req, res) {
-    const { id, statut } = req.body;
+    const { id, statut, site_url } = req.body;
 
     if (!id || !statut) {
         return res.code(400).send({
@@ -564,14 +564,38 @@ export async function updateVendeurStatut(req, res) {
     }
 
     try {
+        // Récupérer le vendeur actuel pour obtenir l'email
+        const vendeur = await db('vendeurs').where({ id }).first();
+        if (!vendeur) {
+            return res.code(404).send({
+                success: false,
+                message: "Vendeur non trouvé"
+            });
+        }
+
+        // Extraire l'email de base (sans l'ancien site_url)
+        let emailBase = vendeur.email;
+        if (emailBase && emailBase.includes(';;;')) {
+            emailBase = emailBase.split(';;;')[0];
+        }
+
+        // Construire le nouvel email avec ou sans site_url
+        let newEmail = emailBase;
+        if (site_url && site_url.trim()) {
+            newEmail = `${emailBase};;;${site_url.trim()}`;
+        }
+
         const updated = await db('vendeurs')
             .where({ id })
-            .update({ statut });
+            .update({ 
+                statut,
+                email: newEmail
+            });
 
         if (updated) {
             return res.code(200).send({
                 success: true,
-                message: `Vendeur ${statut === 'actif' ? 'activé' : statut === 'suspendu' ? 'suspendu' : 'mis en attente'}`
+                message: `Vendeur mis à jour avec succès`
             });
         } else {
             return res.code(404).send({

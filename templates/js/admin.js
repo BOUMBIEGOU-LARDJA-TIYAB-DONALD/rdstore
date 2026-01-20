@@ -287,6 +287,7 @@ class AdminPanel {
         this.productCategorie = document.getElementById('productCategorie');
         this.productDescription = document.getElementById('productDescription');
         this.productImages = document.getElementById('productImages');
+        this.productVendeur = document.getElementById('productVendeur');
         
         // Modal Delete
         this.deleteModalOverlay = document.getElementById('deleteModalOverlay');
@@ -339,6 +340,8 @@ class AdminPanel {
         this.btnSubmitText.textContent = 'Ajouter';
         this.productForm.reset();
         this.productId.value = '';
+        // Charger les vendeurs et sélectionner le vendeur par défaut (id=1)
+        this.loadVendeursSelect();
         this.modalOverlay.classList.add('active');
         this.productTitre.focus();
     }
@@ -358,6 +361,9 @@ class AdminPanel {
         this.productCategorie.value = product.categorie;
         this.productDescription.value = product.description;
         this.productImages.value = product.images ? product.images.join('\n') : '';
+        
+        // Charger les vendeurs et sélectionner le vendeur actuel du produit
+        this.loadVendeursSelect(product.vendeur_id);
         
         this.modalOverlay.classList.add('active');
         this.productTitre.focus();
@@ -392,12 +398,16 @@ class AdminPanel {
         const imagesText = this.productImages.value.trim();
         const images = imagesText ? imagesText.split('\n').map(url => url.trim()).filter(url => url) : [];
         
+        // Récupérer le vendeur sélectionné (par défaut id=1 si aucun)
+        const vendeurId = this.productVendeur.value ? parseInt(this.productVendeur.value) : 1;
+        
         const productData = {
             titre: this.productTitre.value.trim(),
             prix: this.productPrix.value.trim(),
             categorie: this.productCategorie.value.trim(),
             description: this.productDescription.value.trim(),
-            images: images
+            images: images,
+            vendeur_id: vendeurId
         };
 
         if (this.currentEditId) {
@@ -412,9 +422,14 @@ class AdminPanel {
     }
 
     addProduct(data) {
+        // Trouver le nom du vendeur
+        const vendeur = this.vendeurs.find(v => v.id === data.vendeur_id);
+        const vendeurNom = vendeur ? vendeur.nom : 'Admin';
+        
         const newProduct = {
             id: StorageManager.getNextId(this.products),
             ...data,
+            vendeur_nom: vendeurNom,
             lien: `product?id=${StorageManager.getNextId(this.products)}`
         };
         
@@ -430,12 +445,15 @@ class AdminPanel {
                 prix: newProduct.prix,
                 description: newProduct.description,
                 image: newProduct.images.join(';;;'),
-                categorie: newProduct.categorie
+                categorie: newProduct.categorie,
+                vendeur_id: data.vendeur_id
             })
         })
         .then(response => response.json())
         .then(data => {
             console.log('Produit ajouté sur le serveur avec ID:', data.productId);
+            // Recharger les produits depuis l'API pour avoir les données à jour
+            this.loadFromAPI();
         })
         .catch(error => {
             console.error('Erreur lors de l\'ajout du produit sur le serveur:', error);
@@ -445,9 +463,14 @@ class AdminPanel {
     updateProduct(id, data) {
         const index = this.products.findIndex(p => p.id === id);
         if (index !== -1) {
+            // Trouver le nom du vendeur
+            const vendeur = this.vendeurs.find(v => v.id === data.vendeur_id);
+            const vendeurNom = vendeur ? vendeur.nom : 'Admin';
+            
             this.products[index] = {
                 ...this.products[index],
-                ...data                                                                                
+                ...data,
+                vendeur_nom: vendeurNom
             };
             StorageManager.saveProducts(this.products);
             this.render();
@@ -461,12 +484,15 @@ class AdminPanel {
                     prix: data.prix,
                     description: data.description,
                     image: data.images.join(';;;'),
-                    categorie: data.categorie
+                    categorie: data.categorie,
+                    vendeur_id: data.vendeur_id
                 })
             })
             .then(response => response.json())
             .then(data => {
                 console.log('Produit modifié sur le serveur avec ID:', id);
+                // Recharger les produits depuis l'API
+                this.loadFromAPI();
             })
             .catch(error => {
                 console.error('Erreur lors de la modification du produit sur le serveur:', error);
@@ -566,7 +592,8 @@ class AdminPanel {
             'confirmee': 'Confirmée',
             'expediee': 'Expédiée',
             'livree': 'Livrée',
-            'annulee': 'Annulée'
+            'annulee': 'Annulée',
+            'redirige': 'Redirigé'
         };
         return labels[status] || status;
     }
@@ -577,7 +604,8 @@ class AdminPanel {
             'confirmee': 'confirmed',
             'expediee': 'shipped',
             'livree': 'delivered',
-            'annulee': 'cancelled'
+            'annulee': 'cancelled',
+            'redirige': 'redirected'
         };
         return classes[status] || 'pending';
     }
@@ -789,6 +817,31 @@ class AdminPanel {
         }
     }
 
+    // Charger la liste des vendeurs dans le select du modal produit
+    loadVendeursSelect(selectedVendeurId = null) {
+        const select = this.productVendeur;
+        if (!select) return;
+        
+        // Réinitialiser le select
+        select.innerHTML = '<option value="">-- Sélectionner un vendeur --</option>';
+        
+        // Ajouter les vendeurs (tous, pas seulement les actifs)
+        this.vendeurs.forEach(vendeur => {
+            const option = document.createElement('option');
+            option.value = vendeur.id;
+            option.textContent = `${vendeur.nom} (ID: ${vendeur.id}) - ${vendeur.boutique_nom}`;
+            select.appendChild(option);
+        });
+        
+        // Sélectionner le vendeur approprié
+        if (selectedVendeurId) {
+            select.value = selectedVendeurId;
+        } else {
+            // Par défaut, sélectionner le vendeur ID 1 si aucun n'est spécifié
+            select.value = '1';
+        }
+    }
+
     renderVendeurs() {
         const tbody = document.getElementById('vendeursTableBody');
         const empty = document.getElementById('vendeursEmpty');
@@ -849,6 +902,15 @@ class AdminPanel {
         document.getElementById('vendeurModalNom').textContent = vendeur.nom;
         document.getElementById('vendeurModalBoutique').textContent = vendeur.boutique_nom;
         document.getElementById('vendeurStatutSelect').value = vendeur.statut;
+        
+        // Extraire le lien site de l'email si présent (format: email;;;site_url)
+        let siteUrl = '';
+        if (vendeur.email && vendeur.email.includes(';;;')) {
+            const parts = vendeur.email.split(';;;');
+            siteUrl = parts[1] || '';
+        }
+        document.getElementById('vendeurSiteUrl').value = siteUrl;
+        
         document.getElementById('vendeurModalOverlay').classList.add('active');
     }
 
@@ -861,12 +923,17 @@ class AdminPanel {
         if (!this.currentVendeur) return;
 
         const newStatut = document.getElementById('vendeurStatutSelect').value;
+        const siteUrl = document.getElementById('vendeurSiteUrl').value.trim();
 
         try {
             const response = await fetch('/api/admin/vendeurs/statut', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: this.currentVendeur.id, statut: newStatut })
+                body: JSON.stringify({ 
+                    id: this.currentVendeur.id, 
+                    statut: newStatut,
+                    site_url: siteUrl
+                })
             });
 
             if (response.ok) {
@@ -1147,7 +1214,16 @@ class AdminPanel {
 
         this.tableEmpty.style.display = 'none';
         
-        this.tableBody.innerHTML = products.map(product => `
+        this.tableBody.innerHTML = products.map(product => {
+            // Trouver le nom du vendeur
+            const vendeur = this.vendeurs.find(v => v.id === product.vendeur_id);
+            const vendeurDisplay = vendeur 
+                ? `<strong>${vendeur.nom}</strong><br><small>ID: ${vendeur.id}</small>`
+                : (product.vendeur_nom 
+                    ? `<strong>${product.vendeur_nom}</strong><br><small>ID: ${product.vendeur_id || '-'}</small>`
+                    : '<small>Non assigné</small>');
+            
+            return `
             <tr data-id="${product.id}">
                 <td>${product.id}</td>
                 <td>
@@ -1172,6 +1248,9 @@ class AdminPanel {
                     <span class="table-product-category">${product.categorie}</span>
                 </td>
                 <td>
+                    <span class="table-product-vendeur">${vendeurDisplay}</span>
+                </td>
+                <td>
                     <div class="table-actions">
                         <button class="table-action-btn edit" onclick="adminPanel.openEditModal(${product.id})" title="Modifier">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1190,7 +1269,7 @@ class AdminPanel {
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
     }
 }
 

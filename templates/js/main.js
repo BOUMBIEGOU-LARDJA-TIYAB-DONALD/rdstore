@@ -877,6 +877,7 @@ function createProductCard(product, animationDelay = 0) {
     card.style.transitionDelay = `${animationDelay}ms`;
     
     const hasImage = product.images && product.images[0];
+    const boutiqueNom = product.boutique_nom || product.vendeur_nom || '';
     
     card.innerHTML = `
         <div class="product-card-image">
@@ -894,6 +895,7 @@ function createProductCard(product, animationDelay = 0) {
         <div class="product-card-content">
             <h3 class="product-card-title">${product.titre}</h3>
             <p class="product-card-price">${formatPrix(product.prix)}</p>
+            ${boutiqueNom ? `<p class="product-card-boutique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> ${boutiqueNom}</p>` : ''}
             <p class="product-card-desc">${product.description ? product.description.substring(0, 80) + '...' : ''}</p>
             <div class="product-card-actions">
                 <button class="btn-add-cart" data-id="${product.id}" aria-label="Ajouter au panier">
@@ -1038,6 +1040,7 @@ function _initProductDetail(products) {
     const priceEl = document.getElementById('productPrice');
     const descEl = document.getElementById('productDescription');
     const tagEl = document.getElementById('productTag');
+    const boutiqueEl = document.getElementById('productBoutique');
     const whatsappBtn = document.getElementById('whatsappBtn');
     const addToCartBtn = document.getElementById('addToCartBtn');
     const mainImageContainer = document.getElementById('productMainImage');
@@ -1047,6 +1050,15 @@ function _initProductDetail(products) {
     if (priceEl) priceEl.textContent = formatPrix(product.prix);
     if (descEl) descEl.innerHTML = `<p>${product.description || ''}</p>`;
     if (tagEl) tagEl.textContent = product.categorie || 'Premium';
+    
+    // Afficher le nom de la boutique
+    const boutiqueNom = product.boutique_nom || product.vendeur_nom || '';
+    if (boutiqueEl && boutiqueNom) {
+        boutiqueEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Vendu par <strong>${boutiqueNom}</strong>`;
+        boutiqueEl.style.display = 'flex';
+    } else if (boutiqueEl) {
+        boutiqueEl.style.display = 'none';
+    }
 
     document.title = `${product.titre} | RD Store`;
 
@@ -1115,12 +1127,144 @@ function _initProductDetail(products) {
         });
     }
 
-    if (whatsappBtn) {
+    // Vérifier si le vendeur a un site externe
+    const vendeurSiteUrl = product.vendeur_site_url;
+    
+    if (vendeurSiteUrl && whatsappBtn) {
+        // Remplacer le bouton WhatsApp par Commander
+        whatsappBtn.className = 'btn-commander-external';
+        whatsappBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Commander sur le site du vendeur
+        `;
+        whatsappBtn.href = '#';
+        whatsappBtn.removeAttribute('target');
+        
+        // Ouvrir le modal au clic
+        whatsappBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openExternalOrderModal(product, vendeurSiteUrl);
+        });
+    } else if (whatsappBtn) {
         const message = encodeURIComponent(`Bonjour, je suis intéressé par ${product.titre} à ${formatPrix(product.prix)} disponible via ce lien ${window.location.href}. Pouvez-vous me donner plus d'informations ?`);
         whatsappBtn.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${message}`;
     }
 
     loadRelatedProducts(productId, products);
+}
+
+// =====================================================
+// EXTERNAL ORDER MODAL
+// =====================================================
+function openExternalOrderModal(product, vendeurSiteUrl) {
+    const modalOverlay = document.getElementById('externalOrderModalOverlay');
+    const productInfo = document.getElementById('externalOrderProduct');
+    
+    if (!modalOverlay || !productInfo) return;
+    
+    // Afficher les infos du produit
+    const hasImage = product.images && product.images[0];
+    productInfo.innerHTML = `
+        <div class="external-product-image">
+            ${hasImage ? `<img src="${product.images[0]}" alt="${product.titre}">` : ''}
+        </div>
+        <div class="external-product-details">
+            <h4>${product.titre}</h4>
+            <p class="external-product-price">${formatPrix(product.prix)}</p>
+            <p class="external-product-boutique">Vendu par: ${product.boutique_nom || product.vendeur_nom || 'Vendeur'}</p>
+        </div>
+    `;
+    
+    // Stocker les infos pour la soumission
+    modalOverlay.dataset.productId = product.id;
+    modalOverlay.dataset.productTitre = product.titre;
+    modalOverlay.dataset.productPrix = product.prix;
+    modalOverlay.dataset.vendeurSiteUrl = vendeurSiteUrl;
+    modalOverlay.dataset.boutiquenom = product.boutique_nom || '';
+    
+    modalOverlay.classList.add('active');
+    
+    // Initialiser les événements du modal
+    initExternalOrderModalEvents();
+}
+
+function closeExternalOrderModal() {
+    const modalOverlay = document.getElementById('externalOrderModalOverlay');
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+        // Réinitialiser le formulaire
+        const form = document.getElementById('externalOrderForm');
+        if (form) form.reset();
+    }
+}
+
+function initExternalOrderModalEvents() {
+    const modalOverlay = document.getElementById('externalOrderModalOverlay');
+    const closeBtn = document.getElementById('externalOrderModalClose');
+    const cancelBtn = document.getElementById('btnCancelExternalOrder');
+    const form = document.getElementById('externalOrderForm');
+    
+    // Fermer le modal
+    closeBtn?.addEventListener('click', closeExternalOrderModal);
+    cancelBtn?.addEventListener('click', closeExternalOrderModal);
+    modalOverlay?.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeExternalOrderModal();
+    });
+    
+    // Soumettre la commande
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nom = document.getElementById('externalOrderNom').value.trim();
+        const telephone = document.getElementById('externalOrderTel').value.trim();
+        
+        if (!nom || !telephone) {
+            alert('Veuillez remplir tous les champs');
+            return;
+        }
+        
+        const productId = modalOverlay.dataset.productId;
+        const productTitre = modalOverlay.dataset.productTitre;
+        const productPrix = modalOverlay.dataset.productPrix;
+        const vendeurSiteUrl = modalOverlay.dataset.vendeurSiteUrl;
+        const boutiqueNom = modalOverlay.dataset.boutiquenom;
+        
+        // Enregistrer la commande avec statut "redirigé"
+        try {
+            const response = await fetch('/api/commandes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_nom: nom,
+                    client_telephone: telephone,
+                    client_adresse: '',
+                    note: `Commande redirigée vers le site du vendeur: ${boutiqueNom} (${vendeurSiteUrl})`,
+                    articles: [{
+                        id: parseInt(productId),
+                        titre: productTitre,
+                        prix: cartManager ? cartManager.parsePrice(productPrix) : 0,
+                        quantity: 1
+                    }],
+                    total: cartManager ? cartManager.parsePrice(productPrix) : 0,
+                    statut: 'redirige'
+                })
+            });
+            
+            if (response.ok) {
+                console.log('Commande redirigée enregistrée');
+            }
+        } catch (error) {
+            console.error('Erreur enregistrement commande:', error);
+        }
+        
+        // Fermer le modal et rediriger vers le site du vendeur
+        closeExternalOrderModal();
+        window.open(vendeurSiteUrl, '_blank');
+    });
 }
 
 function initGalleryThumbs() {

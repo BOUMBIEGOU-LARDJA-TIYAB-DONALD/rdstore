@@ -223,6 +223,7 @@
                             <option value="expediee">Expédiée</option>
                             <option value="livree">Livrée</option>
                             <option value="annulee">Annulée</option>
+                            <option value="redirige">Redirigé</option>
                         </select>
                     </div>
                 </div>
@@ -279,6 +280,7 @@
                                 <th>Titre</th>
                                 <th>Prix</th>
                                 <th>Catégorie</th>
+                                <th>Vendeur</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -352,6 +354,15 @@
                     <label for="productImages">URLs des images (une par ligne)</label>
                     <textarea id="productImages" name="images" rows="3" placeholder="https://exemple.com/image1.jpg&#10;https://exemple.com/image2.jpg"></textarea>
                     <span class="form-hint">Laissez vide pour utiliser un placeholder</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productVendeur">Vendeur</label>
+                    <select id="productVendeur" name="vendeur_id" class="filter-select" style="width: 100%;">
+                        <option value="">-- Sélectionner un vendeur --</option>
+                        <!-- Options chargées dynamiquement -->
+                    </select>
+                    <span class="form-hint">Par défaut: vendeur ID 1 si aucun n'est sélectionné</span>
                 </div>
                 
                 <div class="form-actions">
@@ -446,6 +457,7 @@
                         <option value="expediee">Expédiée</option>
                         <option value="livree">Livrée</option>
                         <option value="annulee">Annulée</option>
+                        <option value="redirige">Redirigé</option>
                     </select>
                 </div>
                 
@@ -542,7 +554,7 @@
     <div class="modal-overlay" id="vendeurModalOverlay">
         <div class="modal modal-small" id="vendeurModal">
             <div class="modal-header">
-                <h2 id="vendeurModalTitle">Changer le statut</h2>
+                <h2 id="vendeurModalTitle">Modifier le vendeur</h2>
                 <button class="modal-close" id="vendeurModalClose" aria-label="Fermer">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"/>
@@ -556,12 +568,18 @@
                 <p>Boutique: <strong id="vendeurModalBoutique"></strong></p>
                 
                 <div class="form-group" style="margin-top: var(--space-md);">
-                    <label for="vendeurStatutSelect">Nouveau statut</label>
+                    <label for="vendeurStatutSelect">Statut</label>
                     <select id="vendeurStatutSelect" class="filter-select" style="width: 100%;">
                         <option value="en_attente">En attente</option>
                         <option value="actif">Actif</option>
                         <option value="suspendu">Suspendu</option>
                     </select>
+                </div>
+                
+                <div class="form-group" style="margin-top: var(--space-md);">
+                    <label for="vendeurSiteUrl">Lien site personnel (optionnel)</label>
+                    <input type="url" id="vendeurSiteUrl" placeholder="https://site-du-vendeur.com" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: var(--radius-md); background: var(--bg-surface); color: var(--text-primary);">
+                    <span class="form-hint" style="font-size: 0.8rem; color: var(--text-muted);">Si renseigné, le bouton "Commander" remplacera WhatsApp pour ce vendeur</span>
                 </div>
             </div>
             

@@ -3,11 +3,18 @@ import db from '../data/prepare.js';
 export async function getproducts(req, res) {
     try {
         // Ne récupérer que les produits approuvés pour le site public
+        // Jointure avec la table vendeurs pour récupérer le nom du vendeur
         let products = await db('produits')
-            .select('*')
+            .leftJoin('vendeurs', 'produits.vendeur_id', 'vendeurs.id')
+            .select(
+                'produits.*',
+                'vendeurs.nom as vendeur_nom',
+                'vendeurs.boutique_nom',
+                'vendeurs.email as vendeur_email'
+            )
             .where(function() {
-                this.where('statut_validation', 'approuve')
-                    .orWhereNull('statut_validation');
+                this.where('produits.statut_validation', 'approuve')
+                    .orWhereNull('produits.statut_validation');
             });
 
         if (!products || products.length === 0) {
@@ -18,6 +25,16 @@ export async function getproducts(req, res) {
             product.lien = `/product?id=${product.id}`;
             let imagess = product.image ? product.image.split(';;;') : [];
             product.images = imagess;
+            
+            // Extraire le site_url du vendeur si présent (format: email;;;site_url)
+            if (product.vendeur_email && product.vendeur_email.includes(';;;')) {
+                const parts = product.vendeur_email.split(';;;');
+                product.vendeur_site_url = parts[1] || null;
+            } else {
+                product.vendeur_site_url = null;
+            }
+            // Ne pas exposer l'email complet au frontend
+            delete product.vendeur_email;
         });
         console.log(products);
         return res.send(products);
